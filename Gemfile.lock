@@ -1,0 +1,37 @@
+GIT
+  remote: http://github.com/kevwil/aspen.git
+  revision: 60d043bf4d49336f03637b8bd99220cfeda5bce9
+  ref: 60d043bf4d49336f03637b8bd99220cfeda5bce9
+  specs:
+    aspen (1.0)
+
+GIT
+  remote: http://github.com/strobecorp/kirk.git
+  revision: a6218f8c8e96d192c19910f422343663209e8d70
+  ref: a6218f8c8e96d192c19910f422343663209e8d70
+  specs:
+    kirk (0.2.0.beta.3-java)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    jruby-rack (1.0.8)
+    mizuno (0.4.0)
+      rack (>= 1.0.0)
+    rack (1.2.2)
+    trinidad (1.1.0)
+      jruby-rack (>= 1.0.6)
+      trinidad_jars (>= 1.0.0)
+    trinidad_jars (1.0.1)
+
+PLATFORMS
+  java
+
+DEPENDENCIES
+  aspen (= 1.0)!
+  jruby-rack (= 1.0.8)
+  kirk!
+  mizuno (= 0.4.0)
+  rack (= 1.2.2)
+  trinidad (= 1.1.0)
+  trinidad_jars (= 1.0.1)
