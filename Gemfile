@@ -1,3 +1,5 @@
+puts "warning: no TORQUEBOX_BUILD defined; please bundle gems using `rake install'" unless ENV['TORQUEBOX_BUILD']
+source "http://rubygems.torquebox.org/#{ENV['TORQUEBOX_BUILD']}"
 source :rubygems
 
 gem 'kirk', :git => 'http://github.com/strobecorp/kirk.git', :ref => 'a6218f8c8e96d192c19910f422343663209e8d70'
@@ -7,3 +9,4 @@ gem 'jruby-rack', '1.0.8'
 gem 'trinidad_jars', '1.0.1'
 gem 'trinidad', '1.1.0'
 gem 'mizuno', '0.4.0'
+gem 'torquebox', '1.0.0.CR1'

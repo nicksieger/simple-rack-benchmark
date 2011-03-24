@@ -1,6 +1,3 @@
-desc "Install required gems and JMeter."
-task :install => [:install_gems, :build_git_gems, :install_jmeter]
-
 task :default do
   puts "Install and/or run a benchmark."
   puts
@@ -10,6 +7,9 @@ task :default do
   puts
   puts "Available servers are: #{SERVERS}"
 end
+
+desc "Install required gems and JMeter."
+task :install => [:install_gems, :build_git_gems, :install_jmeter, :install_torquebox]
 
 desc "Start a server and run the JMeter driver against it."
 task :bench, :server do |t, args|
@@ -27,6 +27,8 @@ desc "Runs JMeter."
 task :jmeter => :install_jmeter do
   sh "./build/jakarta-jmeter-2.4/bin/jmeter -t srack.jmx"
 end
+
+### INSTALL tasks
 
 task :install_gems do
   puts "Installing and bundling gems..."
@@ -55,6 +57,38 @@ end
 
 directory 'build'
 
+### TorqueBox
+
+TORQUEBOX_BUILD = '2193'
+ENV['TORQUEBOX_BUILD'] = TORQUEBOX_BUILD
+
+file 'build/torquebox-dev.zip' do
+  puts "Downloading TorqueBox dev build..."
+  # TorqueBox's TeamCity ci server has this extra guest-login crap...
+  cookies = '-L --cookie build/cookies --cookie-jar build/cookies'
+  sh "curl #{cookies} 'http://ci.stormgrind.org/guestLogin.html?guest=1'"
+  sh "curl #{cookies} -o build/torquebox-dev.zip 'http://ci.stormgrind.org/repository/download/bt7/#{TORQUEBOX_BUILD}:id/torquebox-dist-bin.zip'"
+end
+
+file 'build/torquebox-1.0.0.CR1-SNAPSHOT/jboss/bin/run.sh' => 'build/torquebox-dev.zip' do |t|
+  Dir.chdir('build') do
+    sh "unzip -qq -o torquebox-dev.zip" do |ok, res|
+    end
+  end
+  touch t.name                # make sure run.sh is newer than zipfile
+end
+
+if ENV['TORQUEBOX'] == 'no'
+  task :install_torquebox do
+    mkdir_p 'build/torquebox-1.0.0.CR1-SNAPSHOT/jboss/bin'
+    touch 'build/torquebox-1.0.0.CR1-SNAPSHOT/jboss/bin/run.sh'
+  end
+else
+  task :install_torquebox => 'build/torquebox-1.0.0.CR1-SNAPSHOT/jboss/bin/run.sh'
+end
+
+### JMeter
+
 file 'build/jakarta-jmeter-2.4/bin/jmeter' do
   puts "Installing JMeter..."
   Dir.chdir('build') do
@@ -63,6 +97,8 @@ file 'build/jakarta-jmeter-2.4/bin/jmeter' do
 end
 
 task :install_jmeter => 'build/jakarta-jmeter-2.4/bin/jmeter'
+
+### Start servers
 
 SERVERS = 'aspen kirk mizuno trinidad'
 

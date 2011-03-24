@@ -13,12 +13,26 @@ GIT
     kirk (0.2.0.beta.3-java)
 
 GEM
+  remote: http://rubygems.torquebox.org/2193/
   remote: http://rubygems.org/
   specs:
     jruby-rack (1.0.8)
     mizuno (0.4.0)
       rack (>= 1.0.0)
     rack (1.2.2)
+    torquebox (1.0.0.CR1)
+      torquebox-base (= 1.0.0.CR1)
+      torquebox-messaging (= 1.0.0.CR1)
+      torquebox-naming (= 1.0.0.CR1)
+      torquebox-rake-support (= 1.0.0.CR1)
+      torquebox-web (= 1.0.0.CR1)
+    torquebox-base (1.0.0.CR1-java)
+    torquebox-messaging (1.0.0.CR1-java)
+      torquebox-base (= 1.0.0.CR1)
+      torquebox-naming (= 1.0.0.CR1)
+    torquebox-naming (1.0.0.CR1-java)
+    torquebox-rake-support (1.0.0.CR1)
+    torquebox-web (1.0.0.CR1-java)
     trinidad (1.1.0)
       jruby-rack (>= 1.0.6)
       trinidad_jars (>= 1.0.0)
@@ -33,5 +47,6 @@ DEPENDENCIES
   kirk!
   mizuno (= 0.4.0)
   rack (= 1.2.2)
+  torquebox (= 1.0.0.CR1)
   trinidad (= 1.1.0)
   trinidad_jars (= 1.0.1)
