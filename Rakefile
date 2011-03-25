@@ -78,13 +78,39 @@ file 'build/torquebox-1.0.0.CR1-SNAPSHOT/jboss/bin/run.sh' => 'build/torquebox-d
   touch t.name                # make sure run.sh is newer than zipfile
 end
 
+def torquebox_path
+  @torquebox_path ||= File.join(File.expand_path('..', __FILE__), 'build/torquebox-1.0.0.CR1-SNAPSHOT')
+end
+
+def torquebox_env
+  require 'rbconfig'
+  ENV['TORQUEBOX_HOME'] = torquebox_path
+  ENV['JBOSS_HOME'] = File.join(torquebox_path, 'jboss')
+  ENV['JRUBY_HOME'] = Config::CONFIG['prefix']
+  ENV.delete 'JAVA_OPTS'
+end
+
 if ENV['TORQUEBOX'] == 'no'
   task :install_torquebox do
-    mkdir_p 'build/torquebox-1.0.0.CR1-SNAPSHOT/jboss/bin'
-    touch 'build/torquebox-1.0.0.CR1-SNAPSHOT/jboss/bin/run.sh'
+    mkdir_p File.join(torquebox_path, 'jboss/bin')
+    touch File.join(torquebox_path, 'jboss/bin/run.sh')
   end
 else
-  task :install_torquebox => 'build/torquebox-1.0.0.CR1-SNAPSHOT/jboss/bin/run.sh'
+  task :install_torquebox => File.join(torquebox_path, 'jboss/bin/run.sh') do
+    # Change listen port to 3000
+    server_conf = File.join(torquebox_path, 'jboss/server/default/conf/bindingservice.beans/META-INF/bindings-jboss-beans.xml')
+    lines = IO.readlines(server_conf).map do |line|
+      if line =~ %r{<property name="port">8080</property>}
+        line.sub(/8080/, '3000')
+      else
+        line
+      end
+    end
+    File.open(server_conf, 'w') {|f| f.puts *lines }
+    File.open('build/torquebox-1.0.0.CR1-SNAPSHOT/Rakefile', 'w') { |f| f.puts "require 'rubygems'", "require 'torquebox/rake/tasks'"}
+    torquebox_env
+    ruby *%w(-S rake -f build/torquebox-1.0.0.CR1-SNAPSHOT/Rakefile torquebox:deploy)
+  end
 end
 
 ### JMeter
@@ -100,7 +126,7 @@ task :install_jmeter => 'build/jakarta-jmeter-2.4/bin/jmeter'
 
 ### Start servers
 
-SERVERS = 'aspen kirk mizuno trinidad'
+SERVERS = 'aspen kirk mizuno trinidad torquebox'
 
 def server_pid
   @server_pid
@@ -118,31 +144,38 @@ def start_server(server)
     'bundle exec mizuno -p 3000 > /dev/null 2>&1'
   when 'trinidad'
     'bundle exec trinidad -r'
+  when 'torquebox'
+    torquebox_env
+    "bundle exec #{torquebox_path}/jboss/bin/run.sh"
   else
     puts "unknown server: #{server}"
     puts "servers are: #{SERVERS}"
     fail
   end
 
-  bin_path = ENV['PATH'].split(File::PATH_SEPARATOR).detect {|p| File.exists?(File.join(p, server))}
-  fail "unable to find `#{server}' script on PATH" unless bin_path
-  server_script = File.join(bin_path, server)
+  if server == 'torquebox'
+    server_script = 'org.jboss.Main'
+  else
+    bin_path = ENV['PATH'].split(File::PATH_SEPARATOR).detect {|p| File.exists?(File.join(p, server))}
+    fail "unable to find `#{server}' script on PATH" unless bin_path
+    server_script = File.join(bin_path, server)
+  end
 
   server_thread = Thread.new { sh server_start_cmd }
   count = 0
   @server_pid = nil
   loop do
     sleep 1
-    `jps -m`.each_line do |l|
+    `jps -ml`.each_line do |l|
       next unless l =~ /#{server_script}/
       @server_pid = l.to_i
       break
     end
     count += 1
-    break if @server_pid || count > 4
+    break if @server_pid || count > 6
   end
 
-  fail "Server PID not found after 4 seconds" unless @server_pid
+  fail "Server PID not found after #{count} seconds" unless @server_pid
   puts "Server started, PID = #{@server_pid}"
   server_thread
 end
